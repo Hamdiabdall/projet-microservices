@@ -43,7 +43,7 @@ Le projet est composé des microservices suivants :
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/votre-username/projet-microservices.git
+git clone https://github.com/Hamdiabdall/projet-microservices.git
 cd projet-microservices
 ```
 
@@ -69,7 +69,7 @@ Si vous préférez exécuter les services individuellement, suivez ces étapes :
 ```bash
 cd user-service
 npm install
-npm start
+npm start  # Démarre sur le port 3005
 ```
 
 #### Service Produit

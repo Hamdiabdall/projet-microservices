@@ -61,7 +61,7 @@ Le projet implémente une architecture microservices complète avec 5 composants
 - **Technologie** : Node.js, Express, MongoDB
 - **Rôle** : Gestion des utilisateurs, authentification JWT
 - **Protocole** : REST
-- **Ports** : 3001 (HTTP)
+- **Ports** : 3005 (HTTP)
 - **Modèles** : User (username, email, password)
 - **Endpoints** : /register, /login
 
