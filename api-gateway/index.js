@@ -21,7 +21,7 @@ const logRequest = (req, res, next) => {
 app.use(logRequest);
 
 // Configuration des URLs de service
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3001';
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3005';
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002';
 const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://localhost:3003';
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'localhost:50051';

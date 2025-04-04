@@ -54,7 +54,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectWithRetry();
-    const PORT = process.env.PORT || 3001;
+    const PORT = process.env.PORT || 3005;
     app.listen(PORT, () => {
       console.log(`Service utilisateur démarré sur le port ${PORT}`);
     });
