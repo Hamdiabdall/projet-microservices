@@ -315,19 +315,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Démarrage du serveur
+// Démarrer le serveur API Gateway
 const PORT = process.env.PORT || 3000;
-
-const startServer = async () => {
-  try {
-    await initKafka();
-    
-    app.listen(PORT, () => {
-      console.log(`API Gateway démarré sur le port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Erreur lors du démarrage de l\'API Gateway:', error);
-  }
-};
-
-startServer();
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`API Gateway démarré sur le port ${PORT}`);
+  await initKafka().catch(err => console.error(`Erreur Kafka à l'initialisation: ${err.message}`));
+});

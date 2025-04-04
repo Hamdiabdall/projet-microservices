@@ -165,8 +165,12 @@ npm start
   ```json
   {
     "userId": "user_id",
-    "productId": "product_id",
-    "quantity": 2
+    "products": [
+      {
+        "productId": "product_id",
+        "quantity": 2
+      }
+    ]
   }
   ```
   Réponse:
@@ -226,7 +230,7 @@ npm start
 
 ## Technologies utilisées
 
-- **Service Utilisateur** : Express.js, MongoDB, JWT
+- **Service Utilisateur** : Express.js, MongoDB, Crypto (pour hachage de mots de passe)
 - **Service Produit** : Apollo Server, GraphQL
 - **Service Commande** : Express.js, Kafka
 - **Service Paiement** : Node.js, gRPC
@@ -325,8 +329,7 @@ order-service/
 payment-service/
 ├── Dockerfile         # Configuration Docker
 ├── package.json       # Dépendances NPM
-├── payment.proto      # Définition du service gRPC
-└── server.js          # Implémentation du serveur gRPC
+└── server.js          # Implémentation du serveur gRPC avec définition proto intégrée
 ```
 
 ## Dépannage
@@ -340,21 +343,30 @@ payment-service/
 2. **Conflits de ports**
    - Si MongoDB ou d'autres services ne démarrent pas en raison de conflits de ports, modifiez les ports exposés dans `docker-compose.yml`
    - Le port MongoDB a déjà été modifié de 27017 à 27018 pour éviter les conflits
+   - Le port du service utilisateur a été changé de 3001 à 3005
 
-3. **Problèmes de connexion à Kafka**
+3. **Problèmes avec bcrypt**
+   - Nous avons remplacé bcrypt par le module crypto intégré à Node.js en raison de problèmes de compatibilité dans certains environnements Docker
+   - Cette solution utilise PBKDF2 avec SHA-512 pour le hachage des mots de passe, offrant une sécurité similaire
+
+4. **Problèmes de connexion à Kafka**
    - Assurez-vous que Zookeeper démarre correctement avant Kafka
    - Vérifiez que les services peuvent résoudre le nom d'hôte "kafka" dans le réseau Docker
+   - Dans docker-compose.yml, nous avons configuré KAFKA_ADVERTISED_HOST_NAME=kafka
 
-4. **Problèmes de communication gRPC**
+5. **Problèmes de communication gRPC**
    - Vérifiez que le service de paiement est accessible depuis l'API Gateway
-   - Les fichiers .proto doivent être identiques entre le client et le serveur
    - Le proto est maintenant défini directement dans le code pour éviter les problèmes de synchronisation
 
-5. **Délais de démarrage**
+6. **Problèmes de résolution de nom dans Docker**
+   - Nous avons ajouté des noms de conteneurs explicites (container_name) dans docker-compose.yml
+   - Le réseau Docker est configuré avec un sous-réseau spécifique pour éviter les conflits
+
+7. **Délais de démarrage**
    - Les services peuvent nécessiter plusieurs tentatives pour se connecter aux dépendances
    - Utilisez l'option `restart: on-failure` dans docker-compose pour les redémarrages automatiques
 
-6. **Vérification des logs**
+8. **Vérification des logs**
    ```bash
    docker-compose logs api-gateway
    docker-compose logs user-service
@@ -375,7 +387,7 @@ Pour une documentation plus détaillée, veuillez consulter le fichier [DOCUMENT
 
 ## Auteurs
 
-- Votre Nom
+- Hamdi Abdallahi
 
 ## Licence
 

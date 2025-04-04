@@ -62,8 +62,9 @@ Le projet implémente une architecture microservices complète avec 5 composants
 - **Rôle** : Gestion des utilisateurs, authentification JWT
 - **Protocole** : REST
 - **Ports** : 3005 (HTTP)
-- **Modèles** : User (username, email, password)
+- **Modèles** : User (username, email, password, salt)
 - **Endpoints** : /register, /login
+- **Sécurité** : Utilisation de PBKDF2 avec SHA-512 pour le hachage de mots de passe (via crypto)
 
 ### Service Produit
 - **Technologie** : Node.js, Apollo Server
@@ -424,7 +425,7 @@ npm start
 #### Modèle utilisateur (user.js)
 ```javascript
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -444,22 +445,33 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  salt: {
+    type: String,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Hash password avant sauvegarde
+// Fonction de hachage
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+}
+
+// Génération d'un sel et hachage du mot de passe
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  this.salt = crypto.randomBytes(16).toString('hex');
+  this.password = hashPassword(this.password, this.salt);
   next();
 });
 
-// Méthode pour vérifier le mot de passe
+// Vérification du mot de passe
 userSchema.methods.comparePassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
+  const hashedPassword = hashPassword(password, this.salt);
+  return hashedPassword === this.password;
 };
 
 module.exports = mongoose.model('User', userSchema);
@@ -747,6 +759,65 @@ server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (er
   server.start();
 });
 ```
+
+## Modifications et optimisations importantes
+
+### Remplacement de bcrypt par crypto
+Dans le service utilisateur, nous avons remplacé la bibliothèque bcrypt par le module crypto intégré à Node.js pour les raisons suivantes :
+- Problèmes de compatibilité de bcrypt dans certains environnements Docker
+- Erreur "Error loading shared library bcrypt_lib.node: Exec format error" fréquente
+- Besoin d'une solution sans dépendances externes
+
+La nouvelle implémentation utilise :
+- PBKDF2 (Password-Based Key Derivation Function 2) avec SHA-512
+- 10 000 itérations pour le hachage
+- Sel cryptographique aléatoire de 16 octets
+- Stockage séparé du sel et du mot de passe haché
+
+Exemple d'implémentation :
+```javascript
+const crypto = require('crypto');
+
+// Fonction de hachage
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+}
+
+// Génération d'un sel et hachage du mot de passe
+const salt = crypto.randomBytes(16).toString('hex');
+const hashedPassword = hashPassword(password, salt);
+
+// Vérification du mot de passe
+function verifyPassword(password, salt, storedHash) {
+  const hash = hashPassword(password, salt);
+  return hash === storedHash;
+}
+```
+
+### Optimisation des configurations Docker
+Plusieurs optimisations ont été apportées aux configurations Docker :
+
+1. **Noms de conteneurs explicites**
+   - Ajout de `container_name` pour chaque service
+   - Amélioration de la résolution de noms entre conteneurs
+
+2. **Configuration réseau améliorée**
+   - Sous-réseau Docker dédié (172.20.0.0/16)
+   - Isolation du trafic et résolution de noms fiable
+
+3. **Health checks personnalisés**
+   - Tests spécifiques pour chaque service
+   - Intervalles et timeouts optimisés
+   - Nombre de tentatives configuré
+
+4. **Gestion des paramètres d'environnement**
+   - Variables d'environnement centralisées dans docker-compose.yml
+   - URL de services configurables via variables d'environnement
+
+5. **Optimisation des Dockerfiles**
+   - Installation des dépendances nécessaires pour la compilation
+   - Couches Docker optimisées pour le cache
+   - Multi-staging pour réduire la taille des images finales
 
 ## Conclusion
 

@@ -1,8 +1,14 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 // Clé secrète pour JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
+// Fonction utilitaire pour hasher un mot de passe
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+}
 
 // Inscription utilisateur
 exports.register = async (req, res) => {
@@ -18,8 +24,18 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Générer le sel et hasher le mot de passe
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hashedPassword = hashPassword(password, salt);
+
     // Créer un nouvel utilisateur
-    const user = new User({ username, email, password });
+    const user = new User({ 
+      username, 
+      email, 
+      password: hashedPassword,
+      salt: salt
+    });
+    
     await user.save();
 
     res.status(201).json({
