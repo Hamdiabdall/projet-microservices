@@ -1,0 +1,146 @@
+services:
+  # Base de données MongoDB
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - microservices-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongodb:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Service Kafka
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: nc -z localhost 2181 || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "new-order:1:1,order-processed:1:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+    networks:
+      - microservices-network
+    healthcheck:
+      test: nc -z localhost 9092 || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Service Utilisateur
+  user-service:
+    build: ./user-service
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/user-service
+      - JWT_SECRET=votre_secret_jwt
+      - PORT=3001
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3001 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service Produit
+  product-service:
+    build: ./product-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3002 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service Commande
+  order-service:
+    build: ./order-service
+    ports:
+      - "3003:3003"
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - PORT=3003
+    depends_on:
+      - kafka
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3003 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service Paiement
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "50051:50051"
+    environment:
+      - PORT=50051
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - USER_SERVICE_URL=http://user-service:3001
+      - PRODUCT_SERVICE_URL=http://product-service:3002
+      - ORDER_SERVICE_URL=http://order-service:3003
+      - PAYMENT_SERVICE_URL=payment-service:50051
+      - KAFKA_BROKERS=kafka:9092
+      - PORT=3000
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+
+networks:
+  microservices-network:
+    driver: bridge 
