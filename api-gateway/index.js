@@ -8,6 +8,8 @@ const { Kafka } = require('kafkajs');
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Middleware
 app.use(cors());
@@ -223,7 +225,7 @@ app.get('/products/:id', async (req, res) => {
 });
 
 // --- Service commande (Kafka) ---
-app.post('/orders', async (req, res) => {
+app.post('/orders', authenticateToken, async (req, res) => {
   try {
     // Créer une requête vers le service de commande
     const result = await fetchWithRetry(`${ORDER_SERVICE_URL}/orders`, {
@@ -239,7 +241,7 @@ app.post('/orders', async (req, res) => {
   }
 });
 
-app.get('/orders', async (req, res) => {
+app.get('/orders', authenticateToken, async (req, res) => {
   try {
     const result = await fetchWithRetry(`${ORDER_SERVICE_URL}/orders`);
     const data = await result.json();
@@ -251,7 +253,7 @@ app.get('/orders', async (req, res) => {
 });
 
 // --- Service paiement (gRPC) ---
-app.post('/payments', (req, res) => {
+app.post('/payments', authenticateToken, (req, res) => {
   const { orderId, amount } = req.body;
   
   if (!paymentClient) {
@@ -321,3 +323,19 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log(`API Gateway démarré sur le port ${PORT}`);
   await initKafka().catch(err => console.error(`Erreur Kafka à l'initialisation: ${err.message}`));
 });
+
+// Middleware to protect routes with JWT
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Access token missing' });
+  }
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+}

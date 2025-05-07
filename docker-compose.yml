@@ -57,7 +57,7 @@ services:
       - "3005:3005"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/user-service
-      - JWT_SECRET=votre_secret_jwt
+      - JWT_SECRET=MySuperSecretKey_2024!@#%&*RandomString
       - PORT=3005
     depends_on:
       - mongodb
@@ -132,6 +132,7 @@ services:
       - PAYMENT_SERVICE_URL=payment-service:50051
       - KAFKA_BROKERS=kafka:9092
       - PORT=3000
+      - JWT_SECRET=MySuperSecretKey_2024!@#%&*RandomString
     depends_on:
       - user-service
       - product-service
@@ -150,4 +151,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/16 
+        - subnet: 172.20.0.0/16

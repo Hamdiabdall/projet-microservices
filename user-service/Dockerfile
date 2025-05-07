@@ -18,4 +18,5 @@ COPY . .
 # Exposer le port 3005 (mis à jour depuis 3001)
 EXPOSE 3005
 
+
 CMD ["node", "index.js"] 

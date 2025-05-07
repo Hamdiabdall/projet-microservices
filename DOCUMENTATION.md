@@ -819,8 +819,113 @@ Plusieurs optimisations ont été apportées aux configurations Docker :
    - Couches Docker optimisées pour le cache
    - Multi-staging pour réduire la taille des images finales
 
+## Comment tester tous les services
+
+Voici comment tester chaque service via l'API Gateway (http://localhost:3000) :
+
+### 1. Service Utilisateur
+- **Inscription**
+  - Méthode : POST `/users/register`
+  - Body :
+    ```json
+    {
+      "username": "testuser",
+      "email": "test@test.com",
+      "password": "test123"
+    }
+    ```
+- **Connexion**
+  - Méthode : POST `/users/login`
+  - Body :
+    ```json
+    {
+      "email": "test@test.com",
+      "password": "test123"
+    }
+    ```
+  - Récupérez le `token` JWT de la réponse pour les routes protégées.
+
+### 2. Service Produit
+- **Lister les produits**
+  - Méthode : GET `/products`
+- **Détail produit**
+  - Méthode : GET `/products/:id`
+
+### 3. Service Commande (protégé)
+- **Créer une commande**
+  - Méthode : POST `/orders`
+  - Headers :
+    - `Authorization: Bearer <votre_token>`
+  - Body :
+    ```json
+    {
+      "userId": "<user_id>",
+      "productId": "<product_id>",
+      "quantity": 1
+    }
+    ```
+- **Lister les commandes**
+  - Méthode : GET `/orders`
+  - Headers :
+    - `Authorization: Bearer <votre_token>`
+
+### 4. Service Paiement (protégé)
+- **Effectuer un paiement**
+  - Méthode : POST `/payments`
+  - Headers :
+    - `Authorization: Bearer <votre_token>`
+  - Body :
+    ```json
+    {
+      "orderId": "<order_id>",
+      "amount": 100
+    }
+    ```
+
+### Conseils
+- Utilisez Postman, Insomnia ou `curl` pour tester.
+- Pour les routes protégées, ajoutez toujours le header `Authorization: Bearer <votre_token>`.
+- Récupérez les IDs (`userId`, `productId`, `orderId`) depuis les réponses précédentes.
+
+### Exemple de requête curl protégée
+```bash
+curl -X POST http://localhost:3000/orders \
+  -H "Authorization: Bearer <votre_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"<user_id>","productId":"<product_id>","quantity":1}'
+```
+
 ## Conclusion
 
 Cette application de microservices démontre la mise en œuvre de différentes architectures de communication (REST, GraphQL, Kafka, gRPC) dans un système cohérent. L'architecture est conçue pour être modulaire, résiliente et extensible, permettant d'ajouter de nouvelles fonctionnalités ou de remplacer des composants sans perturber l'ensemble du système.
 
-Les mécanismes de résilience implémentés assurent que le système peut continuer à fonctionner même en cas de défaillance temporaire de certains composants, tandis que l'API Gateway simplifie l'interface pour les clients tout en gérant la complexité interne de la communication entre les services. 
+Les mécanismes de résilience implémentés assurent que le système peut continuer à fonctionner même en cas de défaillance temporaire de certains composants, tandis que l'API Gateway simplifie l'interface pour les clients tout en gérant la complexité interne de la communication entre les services.
+
+## Sécurité JWT et configuration du secret
+
+Pour garantir la sécurité de l'authentification entre les microservices, il est essentiel de configurer la même clé secrète JWT (`JWT_SECRET`) dans les services `user-service` et `api-gateway`. Cette clé permet de signer et de vérifier les tokens JWT utilisés pour l'accès aux routes protégées (ex : `/orders`, `/payments`).
+
+**Configuration dans `docker-compose.yml` :**
+
+```yaml
+environment:
+  - JWT_SECRET=MySuperSecretKey_2024!@#%&*RandomString
+```
+
+Ajoutez cette variable d'environnement dans les sections `user-service` et `api-gateway` de votre fichier `docker-compose.yml`.
+
+**Important :**
+- La valeur de `JWT_SECRET` doit être identique dans les deux services.
+- Après modification, redémarrez les conteneurs avec :
+  ```bash
+  docker-compose down
+  docker-compose up --build
+  ```
+- Ne partagez jamais votre secret JWT publiquement.
+
+**Flux d'authentification :**
+1. L'utilisateur se connecte via `/users/login` et reçoit un token JWT.
+2. Ce token doit être envoyé dans le header `Authorization: Bearer <token>` pour accéder aux routes protégées.
+3. L'API Gateway vérifie le token avec la clé `JWT_SECRET`.
+
+Si la clé n'est pas identique dans les deux services, vous obtiendrez une erreur "Invalid or expired token" lors de l'accès aux routes protégées.

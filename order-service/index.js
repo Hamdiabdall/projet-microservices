@@ -98,9 +98,7 @@ app.post('/orders', async (req, res) => {
       createdAt: new Date().toISOString()
     };
     
-    // Ajouter la commande à la liste (même si Kafka n'est pas disponible)
-    orders.push(order);
-    
+    // Ne pas ajouter ici: orders.push(order);
     try {
       // Publier l'événement de nouvelle commande
       await producer.send({

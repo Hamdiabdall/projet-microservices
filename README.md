@@ -217,10 +217,12 @@ npm start
 ### Création de commande
 1. Client envoie les détails de la commande à l'API Gateway
 2. API Gateway les transmet au service commande
-3. Service commande crée la commande et publie un événement "new-order" sur Kafka
-4. Service commande consomme lui-même cet événement et met à jour le statut
+3. Service commande publie un événement "new-order" sur Kafka (la commande n'est stockée qu'après consommation de cet événement)
+4. Service commande consomme lui-même cet événement et ajoute la commande à la liste en mémoire
 5. Service commande publie un événement "order-processed" sur Kafka
 6. API Gateway renvoie la confirmation au client
+
+> **Note:** Each order is now stored only once, after being consumed from Kafka, preventing duplicate orders in the GET /orders response.
 
 ### Traitement de paiement
 1. Client envoie les détails du paiement à l'API Gateway
