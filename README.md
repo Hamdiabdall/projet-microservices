@@ -389,7 +389,7 @@ Pour une documentation plus détaillée, veuillez consulter le fichier [DOCUMENT
 
 ## Auteurs
 
-- Hamdi Abdallahi
+- Hamdi Abdallah
 
 ## Licence
 
