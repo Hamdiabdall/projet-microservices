@@ -1,30 +1,57 @@
 pipeline {
     agent any
     
+    environment {
+        DOCKER_HUB_REPO = 'hamdiabdallah'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+    
     stages {
-        stage('Test') {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Hamdiabdall/projet-microservices.git'
+                sh 'ls -la'
+            }
+        }
+        
+        stage('Build All Services') {
             steps {
                 sh '''
-                    echo "Testing Docker access..."
-                    whoami
-                    docker --version
-                    docker ps
+                    echo "Building all microservices..."
                     
-                    # Create a test Dockerfile
-                    echo "FROM alpine:latest" > test.Dockerfile
-                    echo 'CMD ["echo", "Hello from Docker!"]' >> test.Dockerfile
+                    # API Gateway
+                    cd api-gateway && docker build -t ${DOCKER_HUB_REPO}/api-gateway:${IMAGE_TAG} . && cd ..
                     
-                    # Build and run test image
-                    docker build -t test-image -f test.Dockerfile .
-                    docker run --rm test-image
+                    # User Service
+                    cd user-service && docker build -t ${DOCKER_HUB_REPO}/user-service:${IMAGE_TAG} . && cd ..
                     
-                    # Clean up
-                    docker rmi test-image
-                    rm test.Dockerfile
+                    # Product Service
+                    cd product-service && docker build -t ${DOCKER_HUB_REPO}/product-service:${IMAGE_TAG} . && cd ..
                     
-                    echo "✅ Docker is working!"
+                    # Order Service
+                    cd order-service && docker build -t ${DOCKER_HUB_REPO}/order-service:${IMAGE_TAG} . && cd ..
+                    
+                    # Payment Service
+                    cd payment-service && docker build -t ${DOCKER_HUB_REPO}/payment-service:${IMAGE_TAG} . && cd ..
+                    
+                    echo "All images built successfully!"
                 '''
             }
+        }
+        
+        stage('Verify Builds') {
+            steps {
+                sh '''
+                    echo "Built images:"
+                    docker images | grep hamdiabdallah
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline completed'
         }
     }
 }
