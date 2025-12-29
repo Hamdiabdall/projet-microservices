@@ -32,7 +32,7 @@ pipeline {
         }
         
         stage('Build and Push Services') {
-            parallel {
+            stages {
                 stage('API Gateway') {
                     steps {
                         dir('api-gateway') {
