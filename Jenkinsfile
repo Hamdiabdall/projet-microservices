@@ -5,6 +5,7 @@ pipeline {
         DOCKER_HUB_REPO = 'hamdiabdallah' 
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
+        GITHUB_REPO = 'https://github.com/Hamdiabdall/projet-microservices.git'
     }
     
     stages {
@@ -15,8 +16,8 @@ pipeline {
                     branches: [[name: '*/main']],
                     extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/Hamdiabdall/projet-microservices.git',
-                        credentialsId: 'github-credentials' // Add your GitHub credentials ID here
+                        url: "${env.GITHUB_REPO}",
+                        credentialsId: 'github-credentials'
                     ]]
                 ])
             }
@@ -33,8 +34,7 @@ pipeline {
                 }
             }
         }
-        
-        // Rest of the pipeline stages remain the same
+
         stage('Build Docker Images') {
             steps {
                 script {
