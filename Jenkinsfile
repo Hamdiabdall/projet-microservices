@@ -1,6 +1,11 @@
 pipeline {
     agent any
     
+    // Skip the default checkout to avoid "Git installation does not exist" errors
+    options {
+        skipDefaultCheckout()
+    }
+    
     environment {
         DOCKER_HUB_REPO = 'hamdiabdallah'
         // Using Jenkins credentials for security
@@ -10,8 +15,12 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                checkout scm
+                echo 'Cleaning workspace and cloning...'
+                script {
+                    // Manually clean and clone since Jenkins Git plugin is having issues
+                    sh 'rm -rf * .git'
+                    sh 'git clone https://github.com/Hamdiabdall/projet-microservices.git .'
+                }
             }
         }
         
@@ -97,9 +106,15 @@ pipeline {
     
     post {
         always {
-            echo 'Pipeline completed'
-            sh 'docker system prune -f'
-            sh 'docker logout'
+            script {
+                echo 'Pipeline completed'
+                try {
+                    sh 'docker system prune -f'
+                    sh 'docker logout'
+                } catch (Exception e) {
+                    echo 'Failed to cleanup docker: ' + e.message
+                }
+            }
         }
         success {
             echo 'Build and Push successful!'
