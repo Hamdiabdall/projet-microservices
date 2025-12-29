@@ -10,23 +10,22 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    checkout scm
-                    // Alternative explicit checkout if needed:
-                    // checkout([
-                    //     $class: 'GitSCM', 
-                    //     branches: [[name: '*/main']],
-                    //     extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
-                    //     userRemoteConfigs: [[url: 'https://github.com/Hamdiabdall/projet-microservices.git']]
-                    // ])
-                }
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/Hamdiabdall/projet-microservices.git',
+                        credentialsId: 'github-credentials' // Add your GitHub credentials ID here
+                    ]]
+                ])
             }
         }
 
         stage('Install Trivy') {
             steps {
                 script {
-                    // Use official Trivy installation method
+                    // Fixed URL with no extra spaces
                     sh '''
                         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
                         trivy --version
@@ -34,7 +33,8 @@ pipeline {
                 }
             }
         }
-
+        
+        // Rest of the pipeline stages remain the same
         stage('Build Docker Images') {
             steps {
                 script {
@@ -65,6 +65,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
+                    // Fixed registry URL with no extra spaces
                     docker.withRegistry("https://index.docker.io/v1/", "${DOCKER_CREDENTIALS_ID}") {
                         def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
                         services.each { service ->
