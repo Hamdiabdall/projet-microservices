@@ -1,12 +1,9 @@
 pipeline {
     agent any
     environment {
-        // CHANGE THIS: Your Docker Hub username
         DOCKER_HUB_REPO = 'hamdiabdallah' 
-        // Image Tag: Build number or 'latest'
-        IMAGE_TAG = "${env.BUILD_NUMBER}" 
-        // Credentials ID defined in Jenkins (Manage Credentials)
-        DOCKER_CREDENTIALS_ID = 'docker-hub-creds' 
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
     }
     stages {
         stage('Checkout') {
@@ -14,6 +11,24 @@ pipeline {
                 checkout scm
             }
         }
+
+        // --- ADD THIS STAGE ---
+        stage('Install Trivy') {
+            steps {
+                script {
+                    // Install Trivy inside the Jenkins container
+                    sh '''
+                        sudo apt-get update
+                        sudo apt-get install wget apt-transport-https gnupg lsb-release
+                        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+                        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+                        sudo apt-get update
+                        sudo apt-get install trivy
+                    '''
+                }
+            }
+        }
+        // ---------------------
 
         stage('Build Docker Images') {
             steps {
@@ -23,7 +38,6 @@ pipeline {
                         echo "Building ${service}..."
                         dir("${service}") {
                             sh "docker build -t ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} ."
-                            // Tag as latest for easy pulling in dev
                             sh "docker tag ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} ${DOCKER_HUB_REPO}/${service}:latest"
                         }
                     }
@@ -37,7 +51,7 @@ pipeline {
                     def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
                     services.each { service ->
                         echo "Scanning ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG}..."
-                        // Fail the build if HIGH or CRITICAL vulnerabilities are found
+                        // Now Trivy command will exist
                         sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} || true"
                     }
                 }
