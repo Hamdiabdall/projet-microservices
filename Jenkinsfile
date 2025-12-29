@@ -16,11 +16,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Cleaning workspace and cloning...'
-                script {
-                    // Manually clean and clone since Jenkins Git plugin is having issues
-                    sh 'rm -rf .git ./*'
-                    sh 'git clone https://github.com/Hamdiabdall/projet-microservices.git .'
-                }
+                deleteDir()
+                sh 'git clone https://github.com/Hamdiabdall/projet-microservices.git .'
             }
         }
         
