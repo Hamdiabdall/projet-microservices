@@ -10,9 +10,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Use 'master' branch instead of 'main'
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']],
+                    branches: [[name: '*/master']],  // CHANGED FROM 'main' TO 'master'
                     extensions: [[$class: 'CloneOption', timeout: 30, depth: 1]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/Hamdiabdall/projet-microservices.git'
