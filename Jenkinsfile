@@ -1,34 +1,41 @@
 pipeline {
     agent any
     environment {
+        
         DOCKER_HUB_REPO = 'hamdiabdallah' 
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
     }
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+        
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // --- ADD THIS STAGE ---
         stage('Install Trivy') {
             steps {
                 script {
-                    // Install Trivy inside the Jenkins container
+                    
                     sh '''
-                        apt-get update
-                        apt-get install wget apt-transport-https gnupg lsb-release
+                        apt-get update -y
+                        apt-get install -y wget apt-transport-https gnupg lsb-release
                         wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
                         echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
-                        apt-get update
-                        apt-get install trivy
+                        apt-get update -y
+                        apt-get install -y trivy
                     '''
                 }
             }
         }
-        // ---------------------
 
         stage('Build Docker Images') {
             steps {
@@ -51,7 +58,7 @@ pipeline {
                     def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
                     services.each { service ->
                         echo "Scanning ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG}..."
-                        // Now Trivy command will exist
+                        
                         sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} || true"
                     }
                 }
@@ -76,7 +83,8 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker system prune -f'
+            
+            sh 'docker system prune -f || true'
         }
     }
 }
