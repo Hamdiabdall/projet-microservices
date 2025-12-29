@@ -9,7 +9,7 @@ pipeline {
     environment {
         DOCKER_HUB_REPO = 'hamdiabdallah'
         // Using Jenkins credentials for security
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
     }
     
     stages {
