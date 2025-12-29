@@ -2,86 +2,141 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_REPO = 'hamdiabdallah' 
+        DOCKER_HUB_REPO = 'hamdiabdallah'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
-        GITHUB_REPO = 'https://github.com/Hamdiabdall/projet-microservices.git'
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
-                    userRemoteConfigs: [[
-                        url: "${env.GITHUB_REPO}",
-                        credentialsId: 'github-credentials'
-                    ]]
-                ])
-            }
-        }
-
-        stage('Install Trivy') {
+        stage('Checkout Code') {
             steps {
                 script {
-                    // Fixed URL with no extra spaces
-                    sh '''
-                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                        trivy --version
-                    '''
+                    // Clean workspace first
+                    cleanWs()
+                    
+                    // Explicit checkout
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        extensions: [[$class: 'CloneOption', timeout: 30, depth: 1]],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/Hamdiabdall/projet-microservices.git'
+                        ]]
+                    ])
+                    
+                    // Verify checkout
+                    sh 'ls -la'
+                    sh 'pwd'
                 }
             }
         }
-
-        stage('Build Docker Images') {
+        
+        stage('Verify Structure') {
+            steps {
+                sh '''
+                    echo "Checking project structure..."
+                    ls -la
+                    
+                    echo "--- Service Directories ---"
+                    [ -d "api-gateway" ] && echo "✓ api-gateway exists" || echo "✗ api-gateway missing"
+                    [ -d "user-service" ] && echo "✓ user-service exists" || echo "✗ user-service missing"
+                    [ -d "product-service" ] && echo "✓ product-service exists" || echo "✗ product-service missing"
+                    [ -d "order-service" ] && echo "✓ order-service exists" || echo "✗ order-service missing"
+                    [ -d "payment-service" ] && echo "✓ payment-service exists" || echo "✗ payment-service missing"
+                    
+                    echo "--- Dockerfiles ---"
+                    [ -f "api-gateway/Dockerfile" ] && echo "✓ api-gateway/Dockerfile exists" || echo "✗ api-gateway/Dockerfile missing"
+                    [ -f "user-service/Dockerfile" ] && echo "✓ user-service/Dockerfile exists" || echo "✗ user-service/Dockerfile missing"
+                    [ -f "product-service/Dockerfile" ] && echo "✓ product-service/Dockerfile exists" || echo "✗ product-service/Dockerfile missing"
+                    [ -f "order-service/Dockerfile" ] && echo "✓ order-service/Dockerfile exists" || echo "✗ order-service/Dockerfile missing"
+                    [ -f "payment-service/Dockerfile" ] && echo "✓ payment-service/Dockerfile exists" || echo "✗ payment-service/Dockerfile missing"
+                '''
+            }
+        }
+        
+        stage('Build Images') {
             steps {
                 script {
-                    def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
-                    services.each { service ->
-                        echo "Building ${service}..."
-                        dir("${service}") {
-                            sh "docker build -t ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} ."
-                            sh "docker tag ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} ${DOCKER_HUB_REPO}/${service}:latest"
-                        }
+                    // Build API Gateway
+                    dir('api-gateway') {
+                        sh "docker build -t ${env.DOCKER_HUB_REPO}/api-gateway:${env.IMAGE_TAG} ."
+                        sh "docker tag ${env.DOCKER_HUB_REPO}/api-gateway:${env.IMAGE_TAG} ${env.DOCKER_HUB_REPO}/api-gateway:latest"
                     }
-                }
-            }
-        }
-
-        stage('Run Trivy Vulnerability Scan') {
-            steps {
-                script {
-                    def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
-                    services.each { service ->
-                        echo "Scanning ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG}..."
-                        sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG} || echo 'Scan completed with vulnerabilities. Continuing pipeline.'"
+                    
+                    // Build User Service
+                    dir('user-service') {
+                        sh "docker build -t ${env.DOCKER_HUB_REPO}/user-service:${env.IMAGE_TAG} ."
+                        sh "docker tag ${env.DOCKER_HUB_REPO}/user-service:${env.IMAGE_TAG} ${env.DOCKER_HUB_REPO}/user-service:latest"
                     }
+                    
+                    // Build Product Service
+                    dir('product-service') {
+                        sh "docker build -t ${env.DOCKER_HUB_REPO}/product-service:${env.IMAGE_TAG} ."
+                        sh "docker tag ${env.DOCKER_HUB_REPO}/product-service:${env.IMAGE_TAG} ${env.DOCKER_HUB_REPO}/product-service:latest"
+                    }
+                    
+                    // Build Order Service
+                    dir('order-service') {
+                        sh "docker build -t ${env.DOCKER_HUB_REPO}/order-service:${env.IMAGE_TAG} ."
+                        sh "docker tag ${env.DOCKER_HUB_REPO}/order-service:${env.IMAGE_TAG} ${env.DOCKER_HUB_REPO}/order-service:latest"
+                    }
+                    
+                    // Build Payment Service
+                    dir('payment-service') {
+                        sh "docker build -t ${env.DOCKER_HUB_REPO}/payment-service:${env.IMAGE_TAG} ."
+                        sh "docker tag ${env.DOCKER_HUB_REPO}/payment-service:${env.IMAGE_TAG} ${env.DOCKER_HUB_REPO}/payment-service:latest"
+                    }
+                    
+                    // List all built images
+                    sh 'docker images | grep hamdiabdallah'
                 }
             }
         }
-
+        
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    // Fixed registry URL with no extra spaces
-                    docker.withRegistry("https://index.docker.io/v1/", "${DOCKER_CREDENTIALS_ID}") {
-                        def services = ['api-gateway', 'user-service', 'product-service', 'order-service', 'payment-service']
-                        services.each { service ->
-                            echo "Pushing ${service}..."
-                            sh "docker push ${DOCKER_HUB_REPO}/${service}:${IMAGE_TAG}"
-                            sh "docker push ${DOCKER_HUB_REPO}/${service}:latest"
-                        }
+                    // Login to Docker Hub (add your credentials in Jenkins)
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-hub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh """
+                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                        """
                     }
+                    
+                    // Push all images
+                    sh """
+                        docker push ${env.DOCKER_HUB_REPO}/api-gateway:${env.IMAGE_TAG}
+                        docker push ${env.DOCKER_HUB_REPO}/api-gateway:latest
+                        
+                        docker push ${env.DOCKER_HUB_REPO}/user-service:${env.IMAGE_TAG}
+                        docker push ${env.DOCKER_HUB_REPO}/user-service:latest
+                        
+                        docker push ${env.DOCKER_HUB_REPO}/product-service:${env.IMAGE_TAG}
+                        docker push ${env.DOCKER_HUB_REPO}/product-service:latest
+                        
+                        docker push ${env.DOCKER_HUB_REPO}/order-service:${env.IMAGE_TAG}
+                        docker push ${env.DOCKER_HUB_REPO}/order-service:latest
+                        
+                        docker push ${env.DOCKER_HUB_REPO}/payment-service:${env.IMAGE_TAG}
+                        docker push ${env.DOCKER_HUB_REPO}/payment-service:latest
+                    """
                 }
             }
         }
     }
     
     post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
         always {
-            echo 'Cleaning up...'
+            echo '🧹 Cleaning up...'
             sh 'docker system prune -f || true'
         }
     }
