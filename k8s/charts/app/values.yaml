@@ -65,6 +65,8 @@ mongodb:
 
 kafka:
   fullnameOverride: "kafka"
+  image:
+    tag: 4.0.0-debian-12-r10
   zookeeper:
     fullnameOverride: "zookeeper"
   persistence:
