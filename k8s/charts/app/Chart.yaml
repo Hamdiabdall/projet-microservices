@@ -9,31 +9,31 @@ dependencies:
   # Microservices
   - name: microservice
     version: 0.1.0
-    repository: file://../microservice
+    repository: file://charts/microservice
     alias: api-gateway
   - name: microservice
     version: 0.1.0
-    repository: file://../microservice
+    repository: file://charts/microservice
     alias: user-service
   - name: microservice
     version: 0.1.0
-    repository: file://../microservice
+    repository: file://charts/microservice
     alias: product-service
   - name: microservice
     version: 0.1.0
-    repository: file://../microservice
+    repository: file://charts/microservice
     alias: order-service
   - name: microservice
     version: 0.1.0
-    repository: file://../microservice
+    repository: file://charts/microservice
     alias: payment-service
 
-  # Infrastructure
+  # Infrastructure (Local Charts)
   - name: mongodb
     version: 18.1.20
-    repository: https://charts.bitnami.com/bitnami
+    repository: file://charts/mongodb
     alias: mongodb
   - name: kafka
     version: 32.4.3
-    repository: https://charts.bitnami.com/bitnami
+    repository: file://charts/kafka
     alias: kafka
