@@ -1,0 +1,74 @@
+api-gateway:
+  fullnameOverride: "api-gateway"
+  image:
+    repository: hamdiabdallah/api-gateway
+    tag: latest
+  service:
+    port: 3000
+    targetPort: 3000
+  env:
+    USER_SERVICE_URL: "http://user-service:3005"
+    PRODUCT_SERVICE_URL: "http://product-service:3002"
+    ORDER_SERVICE_URL: "http://order-service:3003"
+
+user-service:
+  fullnameOverride: "user-service"
+  image:
+    repository: hamdiabdallah/user-service
+    tag: latest
+  service:
+    port: 3005
+    targetPort: 3005
+  env:
+    MONGO_URI: "mongodb://mongodb:27017/users"
+
+product-service:
+  fullnameOverride: "product-service"
+  image:
+    repository: hamdiabdallah/product-service
+    tag: latest
+  service:
+    port: 3002
+    targetPort: 3002
+  env:
+    MONGO_URI: "mongodb://mongodb:27017/products"
+
+order-service:
+  fullnameOverride: "order-service"
+  image:
+    repository: hamdiabdallah/order-service
+    tag: latest
+  service:
+    port: 3003
+    targetPort: 3003
+  env:
+    MONGO_URI: "mongodb://mongodb:27017/orders"
+    KAFKA_BROKER: "kafka:9092"
+
+payment-service:
+  fullnameOverride: "payment-service"
+  image:
+    repository: hamdiabdallah/payment-service
+    tag: latest
+  service:
+    port: 50051
+    targetPort: 50051
+  env:
+    KAFKA_BROKER: "kafka:9092"
+
+mongodb:
+  fullnameOverride: "mongodb"
+  auth:
+    enabled: false
+  persistence:
+    enabled: false # For mini-project simplicity
+
+kafka:
+  fullnameOverride: "kafka"
+  zookeeper:
+    fullnameOverride: "zookeeper"
+  persistence:
+    enabled: false
+  zookeeper:
+    persistence:
+      enabled: false

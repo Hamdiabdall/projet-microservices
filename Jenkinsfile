@@ -38,6 +38,8 @@ pipeline {
                         dir('api-gateway') {
                             script {
                                 sh "docker build -t ${DOCKER_HUB_REPO}/api-gateway:${env.BUILD_NUMBER} ."
+                                echo "Scanning API Gateway for vulnerabilities..."
+                                sh "trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL ${DOCKER_HUB_REPO}/api-gateway:${env.BUILD_NUMBER}"
                                 sh "docker tag ${DOCKER_HUB_REPO}/api-gateway:${env.BUILD_NUMBER} ${DOCKER_HUB_REPO}/api-gateway:latest"
                                 sh "docker push ${DOCKER_HUB_REPO}/api-gateway:${env.BUILD_NUMBER}"
                                 sh "docker push ${DOCKER_HUB_REPO}/api-gateway:latest"
@@ -51,6 +53,8 @@ pipeline {
                         dir('user-service') {
                             script {
                                 sh "docker build -t ${DOCKER_HUB_REPO}/user-service:${env.BUILD_NUMBER} ."
+                                echo "Scanning User Service for vulnerabilities..."
+                                sh "trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL ${DOCKER_HUB_REPO}/user-service:${env.BUILD_NUMBER}"
                                 sh "docker tag ${DOCKER_HUB_REPO}/user-service:${env.BUILD_NUMBER} ${DOCKER_HUB_REPO}/user-service:latest"
                                 sh "docker push ${DOCKER_HUB_REPO}/user-service:${env.BUILD_NUMBER}"
                                 sh "docker push ${DOCKER_HUB_REPO}/user-service:latest"
@@ -64,6 +68,8 @@ pipeline {
                         dir('product-service') {
                             script {
                                 sh "docker build -t ${DOCKER_HUB_REPO}/product-service:${env.BUILD_NUMBER} ."
+                                echo "Scanning Product Service for vulnerabilities..."
+                                sh "trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL ${DOCKER_HUB_REPO}/product-service:${env.BUILD_NUMBER}"
                                 sh "docker tag ${DOCKER_HUB_REPO}/product-service:${env.BUILD_NUMBER} ${DOCKER_HUB_REPO}/product-service:latest"
                                 sh "docker push ${DOCKER_HUB_REPO}/product-service:${env.BUILD_NUMBER}"
                                 sh "docker push ${DOCKER_HUB_REPO}/product-service:latest"
@@ -77,6 +83,8 @@ pipeline {
                         dir('order-service') {
                             script {
                                 sh "docker build -t ${DOCKER_HUB_REPO}/order-service:${env.BUILD_NUMBER} ."
+                                echo "Scanning Order Service for vulnerabilities..."
+                                sh "trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL ${DOCKER_HUB_REPO}/order-service:${env.BUILD_NUMBER}"
                                 sh "docker tag ${DOCKER_HUB_REPO}/order-service:${env.BUILD_NUMBER} ${DOCKER_HUB_REPO}/order-service:latest"
                                 sh "docker push ${DOCKER_HUB_REPO}/order-service:${env.BUILD_NUMBER}"
                                 sh "docker push ${DOCKER_HUB_REPO}/order-service:latest"
@@ -90,6 +98,8 @@ pipeline {
                         dir('payment-service') {
                             script {
                                 sh "docker build -t ${DOCKER_HUB_REPO}/payment-service:${env.BUILD_NUMBER} ."
+                                echo "Scanning Payment Service for vulnerabilities..."
+                                sh "trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL ${DOCKER_HUB_REPO}/payment-service:${env.BUILD_NUMBER}"
                                 sh "docker tag ${DOCKER_HUB_REPO}/payment-service:${env.BUILD_NUMBER} ${DOCKER_HUB_REPO}/payment-service:latest"
                                 sh "docker push ${DOCKER_HUB_REPO}/payment-service:${env.BUILD_NUMBER}"
                                 sh "docker push ${DOCKER_HUB_REPO}/payment-service:latest"

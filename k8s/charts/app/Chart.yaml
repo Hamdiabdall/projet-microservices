@@ -1,0 +1,39 @@
+apiVersion: v2
+name: microservices-app
+description: Umbrella chart for the microservices application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  # Microservices
+  - name: microservice
+    version: 0.1.0
+    repository: file://../microservice
+    alias: api-gateway
+  - name: microservice
+    version: 0.1.0
+    repository: file://../microservice
+    alias: user-service
+  - name: microservice
+    version: 0.1.0
+    repository: file://../microservice
+    alias: product-service
+  - name: microservice
+    version: 0.1.0
+    repository: file://../microservice
+    alias: order-service
+  - name: microservice
+    version: 0.1.0
+    repository: file://../microservice
+    alias: payment-service
+
+  # Infrastructure
+  - name: mongodb
+    version: 13.18.0
+    repository: https://charts.bitnami.com/bitnami
+    alias: mongodb
+  - name: kafka
+    version: 26.4.2
+    repository: https://charts.bitnami.com/bitnami
+    alias: kafka
