@@ -1,0 +1,24 @@
+dependencies:
+- name: microservice
+  repository: file://../microservice
+  version: 0.1.0
+- name: microservice
+  repository: file://../microservice
+  version: 0.1.0
+- name: microservice
+  repository: file://../microservice
+  version: 0.1.0
+- name: microservice
+  repository: file://../microservice
+  version: 0.1.0
+- name: microservice
+  repository: file://../microservice
+  version: 0.1.0
+- name: mongodb
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.18.0
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 26.4.2
+digest: sha256:858b714cead02807052bb142e99c43e9010605222766709b6e3d177a89e45d2d
+generated: "2025-12-30T02:49:23.137897975+01:00"
