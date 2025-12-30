@@ -6,6 +6,10 @@ pipeline {
         skipDefaultCheckout()
     }
     
+    triggers {
+        pollSCM('* * * * *') // Check GitHub every minute for changes
+    }
+    
     environment {
         DOCKER_HUB_REPO = 'hamdiabdallah'
         // Using Jenkins credentials for security
