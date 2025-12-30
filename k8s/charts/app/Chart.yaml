@@ -30,10 +30,10 @@ dependencies:
 
   # Infrastructure
   - name: mongodb
-    version: 13.18.0
+    version: 18.1.20
     repository: https://charts.bitnami.com/bitnami
     alias: mongodb
   - name: kafka
-    version: 26.4.2
+    version: 32.4.3
     repository: https://charts.bitnami.com/bitnami
     alias: kafka
